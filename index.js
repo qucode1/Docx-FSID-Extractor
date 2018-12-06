@@ -8,22 +8,31 @@
   // const combinedRe = /((?<=<h(3|2)>(<.*>)?)[^<>]+(?=<\/h(3|2)><table><tr><td><p>FS ID)|(?<=<h3>.*<table><tr><td><p>FS ID.*<tr><td><p>)\d*(?=<\/p><\/td>))/gm;
   // const headlineRe = /(?<=<h(1|2|3)>(<.*>)?)[^<>]+(?=<\/h(1|2|3)>)/gm;
   // const headlineIDRe = /((?<=<h(1|2|3)>(<.*>)?)[^<>]+(?=<\/h(1|2|3)>)|((?<=<h3>.*<table><tr><td><p>FS ID.*<tr><td><p>)\d*(?=<\/p><\/td>)))/gm;
-  const h1Re = /(?<=<h1>(<.*>)?)[^<>]+(?=<\/h1>)/gm;
-  const h2Re = /(?<=<h2>(<.*>)?)[^<>]+(?=<\/h2>)/gm;
-  const h3Re = /(?<=<h3>(<.*>)?)[^<>]+(?=<\/h3>)/gm;
-  const hRe = /(?<=<h(\d)>(<.*>)?)[^<>]+(?=<\/h(\d)>)/gm;
+  // const h1Re = /(?<=<h1>(<.*>)?)[^<>]+(?=<\/h1>)/gm;
+  // const h2Re = /(?<=<h2>(<.*>)?)[^<>]+(?=<\/h2>)/gm;
+  // const h3Re = /(?<=<h3>(<.*>)?)[^<>]+(?=<\/h3>)/gm;
+  // const h4Re = /(?<=<h4>(<.*>)?)[^<>]+(?=<\/h4>)/gm;
+  // const h5Re = /(?<=<h5>(<.*>)?)[^<>]+(?=<\/h5>)/gm;
+  // const h6Re = /(?<=<h6>(<.*>)?)[^<>]+(?=<\/h6>)/gm;
+  // const hRe = /(?<=<h(\d)>(<.*>)?)[^<>]+(?=<\/h(\d)>)/gm;
 
   const tableRegex = /(?<=<table><tr><td><p>FS ID.*<tr><td><p>)\d*(?=<\/p><\/td>)/gm;
 
+  const headlineRegexFactory = type =>
+    new RegExp(`(?<=<${type}>(<.*>)?)[^<>]+(?=<\/${type}>)`, "gm");
+
   // const idRegexFactory = type =>
   //   new RegExp(
-  //     `/(?<=<${type}>.*<table><tr><td><p>FS ID.*<tr><td><p>)\d*(?=<\/p><\/td>)/gm`
-  //   );
+  //     `(?<=<${type}>.*<table><tr><td><p>FS ID.*<tr><td><p>)\d*(?=<\/p><\/td>)`
+  //   , "gm");
 
   // const allHeadlineRegex = {
   //   h1: h1Re,
   //   h2: h2Re,
-  //   h3: h3Re
+  //   h3: h3Re,
+  //   h4: h4Re,
+  //   h5: h5Re,
+  //   h6: h6Re
   // };
 
   // const dataHeader = "Titles";
@@ -102,23 +111,33 @@
     return headlines;
   };
 
+  const getSubHeadlines = (hl, html, type) => {
+    const hlType = `h${type}`;
+    const regex = headlineRegexFactory(hlType);
+    console.log("regex", regex);
+    const subHeadlines = getHeadlinesFromHtml(html, hlType, regex);
+    if (subHeadlines && subHeadlines.length) {
+      hl.addSubItems(subHeadlines);
+      hl.subitems.forEach(sHl => {
+        const section = html.substring(sHl.index, sHl.next || html.length - 1);
+        getSubHeadlines(sHl, section, type + 1);
+      });
+    }
+  };
+
   const getAllHeadlines = htmlResult => {
-    const allHeadlines = getHeadlinesFromHtml(htmlResult, "h1", h1Re);
-    allHeadlines.forEach(h1 => {
-      const section = htmlResult.substring(h1.index, h1.next);
-      const h2List = getHeadlinesFromHtml(section, "h2", h2Re);
-      if (h2List && h2List.length) {
-        h1.addSubItems(h2List);
-        h2List.forEach(h2 => {
-          const subSection = section.substring(h2.index, h2.next);
-          const h3List = getHeadlinesFromHtml(subSection, "h3", h3Re);
-          if (h3List && h3List.length) {
-            h2.addSubItems(h3List);
-          }
-        });
-      }
-    });
-    return allHeadlines;
+    const headlineType = 1;
+    const hlType = `h${headlineType}`;
+    const regex = headlineRegexFactory(hlType);
+    console.log("regex", regex);
+    const headlines = getHeadlinesFromHtml(htmlResult, hlType, regex);
+    if (headlines && headlines.length) {
+      headlines.forEach(hl => {
+        const section = htmlResult.substring(hl.index, hl.next);
+        getSubHeadlines(hl, section, headlineType + 1);
+      });
+    }
+    return headlines;
   };
 
   const findTables = (hl, html, position) => {
@@ -171,7 +190,7 @@
         return [...allTables, ...tables];
       }, []);
 
-      // console.log("allTables", allIDs);
+      console.log("allTables", allIDs);
 
       writeIDsToSheet(ws, allIDs);
 
@@ -181,20 +200,21 @@
       )}`;
 
       // create results.xlsx
-      if (!fs.existsSync("./results")) {
-        const createResultsFolder = () =>
-          new Promise((resolve, reject) => {
-            fs.mkdir("./results", err => {
-              reject(err);
-            });
-            resolve();
-          });
-        await createResultsFolder();
-      }
-      wb.write(`./results/result__${randomString}.xlsx`);
-      console.log(
-        `New file: 'result__${randomString}.xlsx' has successfully been created in './results/'`
-      );
+
+      // if (!fs.existsSync("./results")) {
+      //   const createResultsFolder = () =>
+      //     new Promise((resolve, reject) => {
+      //       fs.mkdir("./results", err => {
+      //         reject(err);
+      //       });
+      //       resolve();
+      //     });
+      //   await createResultsFolder();
+      // }
+      // wb.write(`./results/result__${randomString}.xlsx`);
+      // console.log(
+      //   `New file: 'result__${randomString}.xlsx' has successfully been created in './results/'`
+      // );
     } catch (err) {
       console.error(err);
     }

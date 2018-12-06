@@ -9,6 +9,6 @@
 ## Usage
 
 - copy docx file into source folder
-- delete dummy.docx
+- delete dummy.docx from source folder
 - npm start in console
 - xlsx file should get generated in a results folder
