@@ -3,39 +3,13 @@
   const x1 = require("excel4node");
   const fs = require("fs");
 
-  // const idRe = /(?<=<h3>.*<table><tr><td><p>FS ID.*<tr><td><p>)\d*(?=<\/p><\/td>)/gm;
-  // const withTableRe = /(?<=<h(3|2)>(<.*>)?)[^<>]+(?=<\/h(3|2)><table><tr><td><p>FS ID)/gm;
-  // const combinedRe = /((?<=<h(3|2)>(<.*>)?)[^<>]+(?=<\/h(3|2)><table><tr><td><p>FS ID)|(?<=<h3>.*<table><tr><td><p>FS ID.*<tr><td><p>)\d*(?=<\/p><\/td>))/gm;
-  // const headlineRe = /(?<=<h(1|2|3)>(<.*>)?)[^<>]+(?=<\/h(1|2|3)>)/gm;
-  // const headlineIDRe = /((?<=<h(1|2|3)>(<.*>)?)[^<>]+(?=<\/h(1|2|3)>)|((?<=<h3>.*<table><tr><td><p>FS ID.*<tr><td><p>)\d*(?=<\/p><\/td>)))/gm;
-  // const h1Re = /(?<=<h1>(<.*>)?)[^<>]+(?=<\/h1>)/gm;
-  // const h2Re = /(?<=<h2>(<.*>)?)[^<>]+(?=<\/h2>)/gm;
-  // const h3Re = /(?<=<h3>(<.*>)?)[^<>]+(?=<\/h3>)/gm;
-  // const h4Re = /(?<=<h4>(<.*>)?)[^<>]+(?=<\/h4>)/gm;
-  // const h5Re = /(?<=<h5>(<.*>)?)[^<>]+(?=<\/h5>)/gm;
-  // const h6Re = /(?<=<h6>(<.*>)?)[^<>]+(?=<\/h6>)/gm;
-  // const hRe = /(?<=<h(\d)>(<.*>)?)[^<>]+(?=<\/h(\d)>)/gm;
-
-  const tableRegex = /(?<=<table><tr><td><p>FS ID.*<tr><td><p>)\d*(?=<\/p><\/td>)/gm;
+  const tableRegex = /(?<=<table><tr><td><p>FS ID.*<tr><td><p>)\d*\s*(?=<\/p><\/td>)/gm;
 
   const headlineRegexFactory = type =>
-    new RegExp(`(?<=<${type}>(<.*>)?)[^<>]+(?=<\/${type}>)`, "gm");
-
-  // const idRegexFactory = type =>
-  //   new RegExp(
-  //     `(?<=<${type}>.*<table><tr><td><p>FS ID.*<tr><td><p>)\d*(?=<\/p><\/td>)`
-  //   , "gm");
-
-  // const allHeadlineRegex = {
-  //   h1: h1Re,
-  //   h2: h2Re,
-  //   h3: h3Re,
-  //   h4: h4Re,
-  //   h5: h5Re,
-  //   h6: h6Re
-  // };
-
-  // const dataHeader = "Titles";
+    new RegExp(
+      `(?<=<${type}>(<\/?[^hH].*>)?)[^<>]+(?=(<[^hH]*>)?<\/${type}>)`,
+      "gm"
+    );
 
   class ID {
     constructor(value, position) {
@@ -72,6 +46,9 @@
     .style({ font: { bold: true } });
   ws.cell(1, 2)
     .string("FS ID")
+    .style({ font: { bold: true } });
+  ws.cell(1, 4)
+    .string("Result")
     .style({ font: { bold: true } });
 
   ws.row(1).freeze();
@@ -155,6 +132,7 @@
       }, []);
     } else {
       const idMatches = html.match(tableRegex);
+      // console.log("idMatches", idMatches, position);
       const allIDs = idMatches
         ? idMatches.map(id => new ID(id, `${position}`))
         : [];
@@ -166,6 +144,7 @@
     IDs.forEach((id, index) => {
       sheet.cell(1 + index + 1, 1).string(id.position);
       sheet.cell(1 + index + 1, 2).string(id.value);
+      sheet.cell(1 + index + 1, 4).string(`${id.position} - ${id.value}`);
     });
   };
 
@@ -181,6 +160,7 @@
       const htmlResult = await convertDocxToHtml(sourceFileName);
       const allHeadlines = getAllHeadlines(htmlResult);
 
+      // console.log("allHeadlines[4].subitems[1]", allHeadlines[4].subitems[1]);
       const allIDs = allHeadlines.reduce((allTables, hl) => {
         const tables = findTables(
           hl,
@@ -190,7 +170,7 @@
         return [...allTables, ...tables];
       }, []);
 
-      // console.log("allTables", allIDs);
+      // console.log("allIDs", allIDs);
 
       writeIDsToSheet(ws, allIDs);
 
