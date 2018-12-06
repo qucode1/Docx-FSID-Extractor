@@ -114,7 +114,7 @@
   const getSubHeadlines = (hl, html, type) => {
     const hlType = `h${type}`;
     const regex = headlineRegexFactory(hlType);
-    console.log("regex", regex);
+    // console.log("regex", regex);
     const subHeadlines = getHeadlinesFromHtml(html, hlType, regex);
     if (subHeadlines && subHeadlines.length) {
       hl.addSubItems(subHeadlines);
@@ -129,7 +129,7 @@
     const headlineType = 1;
     const hlType = `h${headlineType}`;
     const regex = headlineRegexFactory(hlType);
-    console.log("regex", regex);
+    // console.log("regex", regex);
     const headlines = getHeadlinesFromHtml(htmlResult, hlType, regex);
     if (headlines && headlines.length) {
       headlines.forEach(hl => {
@@ -190,7 +190,7 @@
         return [...allTables, ...tables];
       }, []);
 
-      console.log("allTables", allIDs);
+      // console.log("allTables", allIDs);
 
       writeIDsToSheet(ws, allIDs);
 
@@ -201,20 +201,20 @@
 
       // create results.xlsx
 
-      // if (!fs.existsSync("./results")) {
-      //   const createResultsFolder = () =>
-      //     new Promise((resolve, reject) => {
-      //       fs.mkdir("./results", err => {
-      //         reject(err);
-      //       });
-      //       resolve();
-      //     });
-      //   await createResultsFolder();
-      // }
-      // wb.write(`./results/result__${randomString}.xlsx`);
-      // console.log(
-      //   `New file: 'result__${randomString}.xlsx' has successfully been created in './results/'`
-      // );
+      if (!fs.existsSync("./results")) {
+        const createResultsFolder = () =>
+          new Promise((resolve, reject) => {
+            fs.mkdir("./results", err => {
+              reject(err);
+            });
+            resolve();
+          });
+        await createResultsFolder();
+      }
+      wb.write(`./results/result__${randomString}.xlsx`);
+      console.log(
+        `New file: 'result__${randomString}.xlsx' has successfully been created in './results/'`
+      );
     } catch (err) {
       console.error(err);
     }
